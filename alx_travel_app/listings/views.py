@@ -136,6 +136,13 @@ class BookingViewSet(viewsets.ModelViewSet):
         # Create booking with pending status
         booking = serializer.save(status='pending')
         
+        # Trigger email notification task asynchronously
+        try:
+            from .tasks import send_booking_confirmation_email
+            send_booking_confirmation_email.delay(booking.id)
+        except Exception as e:
+            logger.error(f"Failed to trigger email task: {str(e)}")
+        
         # Get customer information
         guest = booking.guest
         email = guest.email or request.data.get('email', '')

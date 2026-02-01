@@ -2,6 +2,126 @@
 
 The alxtravelapp project is a real-world Django application that serves as the foundation for a travel listing platform.
 
+## Features
+
+- RESTful API for managing travel listings and bookings
+- Background task processing with Celery and RabbitMQ
+- Email notifications for booking confirmations
+- Payment integration with Chapa
+
+## Setup Instructions
+
+### Prerequisites
+
+- Python 3.8+
+- Django 5.2.7
+- RabbitMQ (for Celery message broker)
+- MySQL database
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd alx_travel_app_0x03
+   ```
+
+2. **Create and activate a virtual environment:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r alx_travel_app/requirement.txt
+   ```
+
+4. **Set up environment variables:**
+   Create a `.env` file in the project root with the following variables:
+   ```env
+   SECRET_KEY=your-secret-key
+   DEBUG=True
+   DB_NAME=your-database-name
+   DB_USER=your-database-user
+   DB_PASSWORD=your-database-password
+   DB_HOST=localhost
+   DB_PORT=3306
+   EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USE_TLS=True
+   EMAIL_HOST_USER=your-email@gmail.com
+   EMAIL_HOST_PASSWORD=your-email-password
+   DEFAULT_FROM_EMAIL=noreply@alxtravelapp.com
+   CELERY_BROKER_URL=amqp://guest:guest@localhost:5672//
+   CELERY_RESULT_BACKEND=rpc://
+   ```
+
+5. **Set up RabbitMQ:**
+   
+   **On Ubuntu/Debian:**
+   ```bash
+   sudo apt-get update
+   sudo apt-get install rabbitmq-server
+   sudo systemctl start rabbitmq-server
+   sudo systemctl enable rabbitmq-server
+   ```
+   
+   **On macOS (using Homebrew):**
+   ```bash
+   brew install rabbitmq
+   brew services start rabbitmq
+   ```
+   
+   **On Windows:**
+   - Download and install Erlang from https://www.erlang.org/downloads
+   - Download and install RabbitMQ from https://www.rabbitmq.com/download.html
+   - Start RabbitMQ service from Windows Services or run: `rabbitmq-server.bat`
+
+6. **Run database migrations:**
+   ```bash
+   python manage.py migrate
+   ```
+
+7. **Create a superuser (optional):**
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+### Running the Application
+
+1. **Start the Django development server:**
+   ```bash
+   python manage.py runserver
+   ```
+
+2. **Start the Celery worker (in a separate terminal):**
+   ```bash
+   celery -A alx_travel_app worker --loglevel=info
+   ```
+
+3. **Start the Celery beat scheduler (optional, for periodic tasks):**
+   ```bash
+   celery -A alx_travel_app beat --loglevel=info
+   ```
+
+### Background Task Management
+
+This project uses Celery with RabbitMQ for asynchronous task processing. When a booking is created, an email confirmation is sent asynchronously using a Celery task.
+
+**Key Components:**
+- `alx_travel_app/celery.py`: Celery application configuration
+- `alx_travel_app/listings/tasks.py`: Contains the `send_booking_confirmation_email` shared task
+- `alx_travel_app/listings/views.py`: BookingViewSet triggers the email task using `.delay()`
+
+**Testing Background Tasks:**
+1. Ensure RabbitMQ is running
+2. Start the Celery worker: `celery -A alx_travel_app worker --loglevel=info`
+3. Create a booking via the API
+4. Check the Celery worker logs to see the email task being processed
+5. Check your email (or console if using console backend) for the confirmation email
+
 ## API Documentation
 
 This project provides a RESTful API for managing travel listings and bookings. The API is built using Django REST Framework and is documented with Swagger.
